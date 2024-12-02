@@ -1,0 +1,1 @@
+My Advent of Code 2024 work, in Python which might be a default for most people but is newish for me. 
