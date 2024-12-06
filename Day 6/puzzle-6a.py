@@ -1,6 +1,4 @@
-from itertools import count
 import sys
-# import math
 from enum import Enum
 
 xword = "MAS"
@@ -33,9 +31,13 @@ def count_stars(grid):
     count = 0
     for y in range(len(grid)):
         for x in range(len(grid[0])):
-            if grid[y][x] == "*":
+            if grid[y][x] in ["*","^"]:
                 count += 1
     return count
+
+def print_grid(grid):
+    for l in grid:
+        print (''.join(l))
 
 if __name__ == '__main__':
     if(len(sys.argv) >=3 and sys.argv[2] == 'debug'):
@@ -51,7 +53,6 @@ if __name__ == '__main__':
     dir = Directions.UP
     (xpos,ypos) = find_start(grid)
     (xacc,yacc) = dir.value
-    grid[ypos][xpos] = "*"
 
     exited = False
     while not exited:
@@ -74,5 +75,7 @@ if __name__ == '__main__':
             dir = new_dir
             (xacc,yacc) = dir.value
     
+    if debug:
+        print_grid(grid)
     total = count_stars(grid)
     print(f"Total: {total}")
