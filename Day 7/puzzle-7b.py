@@ -32,6 +32,10 @@ def calc_val_option(num_list,op_list):
             elif op == "*":                
                 total = total * num_list[x]
             elif op == "||":
+                # mult = 10**(len(str(num_list[x])))
+                # before = total
+                # total = (total * mult) + num_list[x]
+                # dprint(f">> {before} || {num_list[x]} = {total} ({mult})")
                 total = int( str(total) + str(num_list[x]))
             else:
                 print(f"*** UNEXPECTED OPERATOR: {op}")
