@@ -5,6 +5,7 @@ import time
 rows = 0
 debug = False
 operations = ["+", "*", "||"]
+max_ops = 0
 
 def dprint(fs):
     if debug:
@@ -22,7 +23,7 @@ def read_data_file(fname):
     dprint(f"Rows: {rows}")
     return grid
 
-def calc_val_option(num_list,op_list):
+def calc_val_option(num_list,op_list,checksum):
     total = num_list[0]
     for x in range(len(num_list)):
         if x > 0:
@@ -39,15 +40,32 @@ def calc_val_option(num_list,op_list):
                 total = int( str(total) + str(num_list[x]))
             else:
                 print(f"*** UNEXPECTED OPERATOR: {op}")
-    return total
+        if total>checksum:
+            return (False,0)
+    return (total==checksum, total)
+
+def max(opc,opl,num_list):
+    global max_ops
+    if( opc> max_ops):
+        max_ops = opc
+        dprint(f">>>New max op list length is : {len(opl)} for {len(num_list)}")
+        return True
+    return False
 
 def validate_calibration(checksum,num_list):
     op_count = len(num_list) - 1
     op_list = itertools.product(operations, repeat=op_count)
+    opc = 0
+    opl = []
     for ops in op_list:
-        if calc_val_option(num_list,ops) == checksum:
+        opc += 1
+        opl.append(ops)
+        (passed,total) = calc_val_option(num_list,ops,checksum)
+        if passed:
             dprint(f"Numbers {num_list} with ops {ops} = {checksum}")
+            max(opc,opl,num_list)
             return True
+    max(opc,opl,num_list)
     return False
 
 if __name__ == '__main__':
@@ -67,3 +85,4 @@ if __name__ == '__main__':
 
     print(f"Total : {total}, success: {count} out of {len(grid)}")
     print(f"Elapsed time: {end-start} (s)")
+    print(f"Most operations: {max_ops}")
