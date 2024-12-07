@@ -2,7 +2,6 @@ import sys
 import copy
 from enum import Enum
 
-xword = "MAS"
 rows = 0
 cols = 0
 debug = False
