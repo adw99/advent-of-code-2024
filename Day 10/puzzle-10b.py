@@ -11,8 +11,6 @@ def dprint(fs):
         print(fs)
 
 def read_data_file(fname):
-    global rows
-    global cols
     df = open(fname, "r")
     fs = df.read()
     lines = fs.split('\n')
