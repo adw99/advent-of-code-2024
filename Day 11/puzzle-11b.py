@@ -133,7 +133,7 @@ def count_one_stone(stone, loops):
 
 if __name__ == '__main__':
     bottoms = []
-    print(f"*** Day 11, Part 1 ***\n")
+    print(f"*** Day 11, Part 2 ***\n")
     if(len(sys.argv) >=3 and sys.argv[2] == 'debug'):
         debug = True
     loops = 25
