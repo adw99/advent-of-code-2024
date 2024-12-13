@@ -9,7 +9,7 @@ def dprint(fs):
         print(fs)
 
 def read_data_file(fname):
-
+    offset_b = 10000000000000
     button_rex = re.compile("Button (A|B): X\\+(\d+), Y\\+(\d+)")
     prize_rex = re.compile("Prize: X\\=(\\d+), Y\\=(\\d+)")
 
@@ -24,7 +24,7 @@ def read_data_file(fname):
             curr_machine[m[1]] = [int(m[2]), int(m[3])]
         elif 'Prize' in l:
             m = prize_rex.search(l)
-            curr_machine['prize'] = [int(m[1]),int(m[2])]
+            curr_machine['prize'] = [int(m[1]) + offset_b,int(m[2]) + offset_b]
         else:
             # blank line, get ready for next machine
             curr_machine = {}
@@ -35,7 +35,7 @@ def check_count(x):
     # As per challenge, button counts should not exceed 100
     # Also if the math returns something not integer-shaped, we
     # can't win this prize. I'm checking that to 3 digits here.
-    check = 0.0 < x <=100.0 and abs(x - round(x))<0.001
+    check = 0.0 <= x  and abs(x - round(x))<0.001
     return check
 
 def solve_for_machine(m1):
