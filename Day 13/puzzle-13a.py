@@ -35,28 +35,26 @@ def check_count(x):
     # As per challenge, button counts should not exceed 100
     # Also if the math returns something not integer-shaped, we
     # can't win this prize. I'm checking that to 3 digits here.
-    return x<=100.0 and int(x*1000)%1000 == 0 
+    check = 0.0 < x <=100.0 and abs(x - round(x))<0.1
+    return check
 
 def solve_for_machine(m1):
+    # dprint(f"Machine: {m1}")
     global button_costs
-    dprint(f"Machine: {m1}")
     ba = m1['A']
     bb = m1['B']
 
-    a1 = np.matrix([ [ba[0],bb[0] ], [ba[1],bb[1]]])
-    a1_invert = np.linalg.inv(a1)
-
+    a1 = np.array([ [ba[0],bb[0] ], [ba[1],bb[1]]])
+    a1_i = np.linalg.inv(a1)
     p = m1['prize']
-    a2 = np.matrix( [ [p[0]], [p[1]]] )
-    result = a1_invert * a2
+    a2 = np.array( [ p[0], p[1]] )
 
-    dprint(f"Result: {result}")
-    dprint(f"Result2: {result[0].tolist()}")
-    acount = result[0][0]
-    bcount = result[1][0]
-    dprint(f"?>{acount},{bcount} - {type(acount)}")
+    result = np.dot(a1_i,a2)
+    acount = result[0]
+    bcount = result[1]
+        
     if check_count(acount) and check_count(bcount):
-        return acount * button_costs[0] + bcount * button_costs[1]
+        return int(round(acount)) * button_costs[0] + int(round(bcount)) * button_costs[1]
     else:
         return 0
 
@@ -67,15 +65,14 @@ if __name__ == '__main__':
         debug = True
 
     machines = read_data_file(sys.argv[1])
-    dprint(f"Machines({len(machines)}): {machines}")
+    dprint(f"Machine count: {len(machines)}")
     total = 0
     prizes = 0
-    # for m in machines:
-    #     tokens = solve_for_machine(m)
-    #     if tokens !=0:
-    #         prizes += 1
-    #         total += tokens
-    solve_for_machine(machines[0])
+    for m in machines:
+        tokens = solve_for_machine(m)
+        if tokens !=0:
+            prizes += 1
+            total += tokens
     print(f"We need {total} tokens to win {prizes} prizes")
 
     
