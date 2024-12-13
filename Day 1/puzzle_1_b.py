@@ -28,7 +28,7 @@ def total(la,lb):
     return sum
 
 if __name__ == '__main__':
-    tx = read_data_file('puzzle-1.txt')
+    tx = read_data_file('aoc-input-1.txt')
     la, lb = process_data_string(tx)
    
     print(f"Total: {total(la,lb)}")

@@ -42,7 +42,7 @@ def process_report(r):
 
 
 if __name__ == '__main__':
-    tx = read_data_file('puzzle-2.txt')
+    tx = read_data_file('aoc-input-2.txt')
     reports = process_data_string(tx)
 
     safe = 0
