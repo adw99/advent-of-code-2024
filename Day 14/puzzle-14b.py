@@ -48,7 +48,6 @@ def read_data_file(fname):
         pos = Position(m[1],m[2])
         vel = Velocity(m[3],m[4])
         rob = Robot(pos,vel)
-        dprint(rob)
         robots.append(rob)
     return robots
 
@@ -59,40 +58,33 @@ def draw_robots(robots,width,height):
         grid.append(['.']*width)
     # add robot counts
     for r in robots:
-        if grid[r.curr.y][r.curr.x] == '.':
-            grid[r.curr.y][r.curr.x] = 1
-        else:
-            grid[r.curr.y][r.curr.x] += 1 
+        grid[r.curr.y][r.curr.x] = '*'
     return grid
 
 def print_grid(grid):
     for line in grid:
         dprint(''.join([str (i) for i in line]))
 
-def count_quad(grid,xmin,xmax,ymin,ymax):
-    count = 0
-    # dprint(f"Quad: y:{ymin} + {list(range(ymax-ymin))}, x:{xmin} + {list(range(xmax-xmin))}")
-    for y in range(ymax-ymin):
-        for x in range(xmax-xmin):
-            pt = grid[ymin+y][xmin+x]
 
-            if pt!= '.':
-                count += pt
-    return count
-
-def count_quadrants(grid):
-    height = len(grid)
-    width = len(grid[0])
-    midx = math.ceil(width/2) 
-    midy = math.ceil(height/2)
-    q1 = count_quad(grid,0,midx-1,0,midy-1)
-    q2 = count_quad(grid,midx,width,0,midy-1)
-    q3 = count_quad(grid,0,midx-1,midy,height)
-    q4 = count_quad(grid,midx,width,midy,height)
-    dprint(f"Quad counts: {q1}, {q2}, {q3}, {q4}")
-
-    return q1 * q2 * q3 * q4
-
+def find_long_row(grid):
+    longest = 0
+    for line in grid:
+        prev = '.'
+        curr_count = 0
+        for x in range(len(line)):
+            curr = line[x]
+            if curr == '.':
+                # did we just end a segment ?
+                if prev == '*':
+                    # yes, check if longest
+                    if curr_count > longest:
+                        longest = curr_count
+                curr_count = 0
+            else: 
+                # we are in a segment, even if it's the first star
+                curr_count += 1
+            prev = curr
+    return longest
 
 if __name__ == '__main__':
     button_costs = [3,1]
@@ -110,13 +102,20 @@ if __name__ == '__main__':
         # actual input 
         width = 101
         height = 103
-    time = 100
+    time = 10000 
 
-    for r in robots:
-        r.move(time,width,height)
+    longest_row = 0
+    longest_row_time = 0
+    for t in range(time):
+        for r in robots:
+            r.move(1,width,height)
+        grid = draw_robots(robots,width,height)
+        long = find_long_row(grid)        
+        if long > longest_row:
+            longest_row = long
+            longest_row_time = t
+            if long > 10:
+                print_grid(grid)
+                dprint(f"Time: {t+1}")
 
-    grid = draw_robots(robots,width,height)        
-    print_grid(grid)
-
-    safety_num = count_quadrants(grid)
-    print(f"Safety factor: {safety_num}")
+    print(f"Time of longest row: {longest_row_time+1}, longest row: {longest_row}")
