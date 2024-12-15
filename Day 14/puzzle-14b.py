@@ -88,7 +88,7 @@ def find_long_row(grid):
 
 if __name__ == '__main__':
     button_costs = [3,1]
-    print(f"*** Day 13, Part 1 ***\n")
+    print(f"*** Day 14, Part 2 ***\n")
     if(len(sys.argv) >=3 and sys.argv[2] == 'debug'):
         debug = True
 
