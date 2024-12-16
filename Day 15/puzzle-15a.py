@@ -47,7 +47,7 @@ def can_move(m,start,warehouse):
     if warehouse[ny][nx] == '.':
         # dprint(f"Can move ({start}) {m}: True")
         return True
-    elif warehouse [ny][nx] == "O":
+    elif warehouse[ny][nx] == "O":
         return can_move(m,(nx,ny),warehouse)
     else:
         # dprint(f"Can move ({start}) {m}: False")
