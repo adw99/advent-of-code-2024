@@ -50,7 +50,8 @@ class bcolors:
 Directions = Enum('Directions', [ ('UP', (0,-1)), ('RIGHT',(1,0)),('DOWN',(0,1)), ('LEFT',(-1,0))])
 Opp_Dir = Enum('OPPOSITE Direction', [ ('UP', 'DOWN'), ('RIGHT','LEFT'), ('DOWN','UP'), ('LEFT', 'RIGHT')])
 
-def build_graph(grid,G):
+def build_graph(grid):
+    G = nx.Graph()
     nodes = []
     for y in range(len(grid)):
         for x in range(len(grid[0])):
@@ -58,56 +59,28 @@ def build_graph(grid,G):
                 for d in Directions:
                     nodes.append((x,y,d.name))
                     G.add_node((x,y,d.name))
+
     for pt in nodes:
         # add edges that represent turns
         (pt_x,pt_y,pt_dir) = pt
         for d in Directions:
+            (xinc,yinc) = d.value
+            newx = pt_x + xinc
+            newy = pt_y + yinc
+            if grid[newy][newx] == '.':
+                G.add_edge( (pt_x,pt_y,d.name),(newx,newy,d.name),weight=1 )
             if d.name!= pt_dir:
                 G.add_edge( pt, (pt_x,pt_y,d.name),weight=1000)
-                if d != Opp_Dir[pt_dir]:
-                    (xinc,yinc) = d.value
-                    newx = pt_x + xinc
-                    newy = pt_y + yinc
-                    if grid[newy][newx] == '.':
-                        G.add_edge( (pt_x,pt_y,d.name),(newx,newy,d.name),weight=1 )
 
     # special case for end
     (x,y) = end
-    end_spec = (x,y,'?')
-    G.add_node(end_spec)
+    G.add_node((x,y,'?'))
     for d in Directions:
-        G.add_edge( (x,y,d.name),end_spec,weight=0)
-    # special case for start
-    (x,y) = start
-    start_spec = (x,y,'?')
-    G.add_node(start_spec)
-    for d in Directions:
-        G.add_edge( (x,y,d.name),start_spec,weight=0)
+        G.add_edge( (x,y,d.name),(x,y,'?'),weight=0)
 
     dprint(f"Nodes>{len(list(G.nodes))}")
     dprint(f"Edges>{len(list(G.edges))}")
-
-
-def build_edges(grid,G,start,end):
-    q = [start]
-    count = 0
-    visited = [start]
-    while len(q)>0:
-        pt = q.pop()
-        (x,y,pt_dir) = pt
-        visited.append((x,y))
-        for d in Directions:            
-            (xinc,yinc) = d.value
-            newx = x + xinc
-            newy = y + yinc
-            if grid[newy][newx] in [".","E"]:
-
-                eweight = 1 if d == pt_dir else 1001
-                G.add_edge((x,y),(newx,newy),weight=eweight)
-                count +=1
-                if (newx,newy) not in visited:
-                    q.append((newx,newy,d))
-    dprint(f"Edges added to graph: {count}")
+    return G
 
 def path_dist(G,target):
     return nx.single_source_dijkstra(G, source=target, weight='weight')
@@ -118,12 +91,15 @@ if __name__ == '__main__':
     if(len(sys.argv) >=3 and sys.argv[2] == 'debug'):
         debug = True
     grid = read_data_file(sys.argv[1])
-    G = nx.Graph()
     start = find_char(grid,'S')
     end = find_char(grid,'E')
     dprint(f"Start:{start}, End: {end}")
+    
     (x,y) = start
-    build_graph(grid,G)
+    G = build_graph(grid)
+    print(f"Nodes: {len(G.nodes)}")
+    print(f"Edges: {len(G.edges)}")
+
     start_pt = (x,y,Directions.RIGHT.name)
     (x,y) = end
     end_pt = (x,y,'?')
@@ -131,17 +107,25 @@ if __name__ == '__main__':
     dprint(f"Grid built, solving....")
     score = nx.shortest_path_length(G, start_pt, end_pt, weight="weight")
     print(f"Shortest path? : {score}")
-
+    
     # Find nodes that are on any of the shortest paths
     dprint("Finding Djikstra's.....")
     dist_from_start, _ = nx.single_source_dijkstra(G, source=start_pt, weight='weight')
     dist_from_end, _   = nx.single_source_dijkstra(G, source=end_pt, weight='weight')    
+    
+    # dist_from_start, _ = nx.single_source_bellman_ford(G, source=start_pt, weight='weight')
+    # dist_from_end, _   = nx.single_source_bellman_ford(G, source=end_pt, weight='weight')    
+
+    
+    min_cost = dist_from_start[end_pt]
+    mc2 = dist_from_end[start_pt]
+    dprint(f"Min cost?: {min_cost} / {mc2}")
     dprint("Finding chairs....")
     chairs = []
     for pt in G.nodes():
         (x,y,d) = pt
-        if( dist_from_start[pt] + dist_from_end[pt] == score ):
+        if( dist_from_start[pt] + dist_from_end[pt] == min_cost ):
             if not (x,y) in chairs:
                 chairs.append((x,y))
     print(f"Chairs: {len(chairs)}")
-    dprint(f"Chair list: {chairs}")
+    # dprint(f"Chair list: {chairs}")
