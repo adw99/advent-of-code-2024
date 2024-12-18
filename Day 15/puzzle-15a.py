@@ -1,7 +1,5 @@
 import sys
 import re
-import copy 
-import math
 from enum import Enum
 
 debug = False
@@ -11,8 +9,6 @@ def dprint(fs):
         print(fs)
 
 def read_data_file(fname):
-    line_rex = re.compile("p=(\\d+),(\\d+) v=(-?\\d+),(-?\\d+)")
-
     df = open(fname, "r")
     fs = df.read()
     lines = fs.split('\n')

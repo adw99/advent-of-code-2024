@@ -77,6 +77,12 @@ def build_graph(grid,G):
     G.add_node(end_spec)
     for d in Directions:
         G.add_edge( (x,y,d.name),end_spec,weight=0)
+    # special case for start
+    (x,y) = start
+    start_spec = (x,y,'?')
+    G.add_node(start_spec)
+    for d in Directions:
+        G.add_edge( (x,y,d.name),start_spec,weight=0)
 
     dprint(f"Nodes>{len(list(G.nodes))}")
     dprint(f"Edges>{len(list(G.edges))}")
@@ -103,7 +109,8 @@ def build_edges(grid,G,start,end):
                     q.append((newx,newy,d))
     dprint(f"Edges added to graph: {count}")
 
-
+def path_dist(G,target):
+    return nx.single_source_dijkstra(G, source=target, weight='weight')
 
 if __name__ == '__main__':
     button_costs = [3,1]
@@ -124,7 +131,17 @@ if __name__ == '__main__':
     dprint(f"Grid built, solving....")
     score = nx.shortest_path_length(G, start_pt, end_pt, weight="weight")
     print(f"Shortest path? : {score}")
-    # all_paths = nx.all_shortest_paths(G, start_pt, end_pt, weight="weight")  #, method = 'bellman-ford'
-    # chairs = set([(x[0], x[1]) for pt in all_paths for x in pt])    
-    # chair_count = len(chairs)
-    # print(f"Number of chairs: {chair_count}")
+
+    # Find nodes that are on any of the shortest paths
+    dprint("Finding Djikstra's.....")
+    dist_from_start, _ = nx.single_source_dijkstra(G, source=start_pt, weight='weight')
+    dist_from_end, _   = nx.single_source_dijkstra(G, source=end_pt, weight='weight')    
+    dprint("Finding chairs....")
+    chairs = []
+    for pt in G.nodes():
+        (x,y,d) = pt
+        if( dist_from_start[pt] + dist_from_end[pt] == score ):
+            if not (x,y) in chairs:
+                chairs.append((x,y))
+    print(f"Chairs: {len(chairs)}")
+    dprint(f"Chair list: {chairs}")
