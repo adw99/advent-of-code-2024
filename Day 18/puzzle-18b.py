@@ -102,6 +102,41 @@ def build_dijkstra(start,grid):
 
     return distances
 
+def print_distances(grid,distances):
+    for y in range(len(grid)):
+        line = ''
+        for x in range(len(grid[0])):
+            if grid[y][x] == "#":
+                line += "#####"
+            else:
+                line += '(' + str(distances[y][x].shortest_distance).zfill(3) + ')'
+        print(line)
+
+def find_path(grid,distances,end):
+    path = []
+    (x,y) = end
+    score = distances[y][x].shortest_distance
+    if score == math.inf:
+        return []
+    rows = len(grid)
+    cols = len(grid[0])
+
+    visited = []
+    while score>0:
+        for d in Directions:
+            (xinc,yinc) = d.value
+            newx = x+xinc
+            newy = y+yinc
+            if 0 <= newx < cols and 0 <= newy < rows and grid[newy][newx] == '.' and (newx,newy) not in visited:
+                visited.append((newx,newy))
+                if distances[newy][newx].shortest_distance == score-1:
+                    path.append((newx,newy))
+                    score = score - 1
+                    x = newx
+                    y = newy
+                    break
+    return path
+
 if __name__ == '__main__':
     button_costs = [3,1]
     print(f"*** Day 16, Part 2 ***\n")
@@ -113,14 +148,22 @@ if __name__ == '__main__':
     distances = build_dijkstra((0,0), grid)
     end = distances[dim-1][dim-1]
     print(f"Initial score: {end.shortest_distance}")
-
+    if debug:
+        print_distances(grid,distances)
+    path = find_path(grid,distances,(dim-1,dim-1))
+    dprint(f"Path length: {len(path)}")
     for tick in range(time,len(drops)):
         (x,y) = drops[tick]
         grid[y][x] = '#'
-        distances = build_dijkstra((0,0), grid)
-        end = distances[dim-1][dim-1]
-        print(f"{tick}) ({x},{y}): {end.shortest_distance}")
-        if end.shortest_distance == math.inf:
-            break
+        if (x,y) in path:            
+            distances = build_dijkstra((0,0), grid)
+            end = distances[dim-1][dim-1]
+            print(f"{tick}) ({x},{y}): {end.shortest_distance}")
+            if end.shortest_distance == math.inf:
+                break
+            else:
+                path = find_path(grid,distances,(dim-1,dim-1))
+        else:
+                print(f"{tick}) ({x},{y}): not on shortest path")
 
 
