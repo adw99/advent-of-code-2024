@@ -2,7 +2,6 @@ import sys
 from enum import Enum
 import copy
 import networkx as nx
-import matplotlib.pyplot as plt
 
 debug = False
 
