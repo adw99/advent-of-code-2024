@@ -139,7 +139,7 @@ def find_path(grid,distances,end):
 
 if __name__ == '__main__':
     button_costs = [3,1]
-    print(f"*** Day 16, Part 2 ***\n")
+    print(f"*** Day 18, Part 2 ***\n")
     if(len(sys.argv) >=3 and sys.argv[2] == 'debug'):
         debug = True
     grid,drops,dim,time = read_data_file(sys.argv[1])
