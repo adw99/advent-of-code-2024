@@ -3,6 +3,7 @@ from enum import Enum
 import copy
 import heapq
 import math
+from collections import defaultdict
 
 debug = False
 
@@ -27,7 +28,10 @@ def print_trail(trail,master_grid):
     grid = copy.deepcopy(master_grid)
     for pt in trail:
         (x,y) = pt
-        grid[y][x] = f"{bcolors.OKCYAN}*{bcolors.ENDC}"
+        char = grid[y][x]
+        if char == ".":
+            char = "*"
+        grid[y][x] = f"{bcolors.OKCYAN}{char}{bcolors.ENDC}"
     print_grid(grid)
 
 def find_char(grid,target):
@@ -98,80 +102,74 @@ def build_dijkstra(start,grid):
 
     return distances
 
-
-
-def find_largest_gain(x,y,grid,distances):
-    # find the largest delta across this point, vertically or horizontally
-    gain = 0
-    rows = len(grid)
-    cols = len(grid[0])
-    leftx = x-1
-    rightx = x+1
-    if leftx >=0 and rightx < cols and grid[y][leftx] != '#' and grid[y][rightx] != '#':
-        hgain = abs( distances[y][leftx].shortest_distance - distances[y][rightx].shortest_distance) - 2
-        if hgain == math.inf:
-            hgain = 0
-    else:
-        hgain = 0
-    topy = y-1
-    boty = y+1
-    if topy >=0 and boty < rows and grid[topy][x] != '#' and grid[boty][x] != '#':
-        vgain = abs( distances[topy][x].shortest_distance - distances[boty][x].shortest_distance) - 2
-        if vgain == math.inf:
-            vgain = 0
-    else:
-        vgain = 0
-    return max(hgain,vgain)
-
 def skipable(x,y,grid):
     rows = len(grid)
     cols = len(grid[0])
-    if grid[y][x] == "#" and not x in [0,cols-1] and not y in [0,rows-1]:
-        return True
-    else:
-        return False            
+    return grid[y][x] == "#" and not x in [0,cols-1] and not y in [0,rows-1]
 
-def set_add(myset,val):
-    if not val in myset:
-        myset[val] = 1
-    else:
-        myset[val] = myset[val] + 1
+def build_trail(end,start,distances):
+    trail = []
+    pt = end
+    while pt != None:
+        trail.append(pt)
+        (x,y) = pt
+        pt = distances[y][x].prev_node
+
+    return trail
+
+def manhattan(a,b):
+    return abs(a[0]-b[0]) + abs(a[1]-b[1])
 
 if __name__ == '__main__':
     button_costs = [3,1]
     print(f"*** Day 20, Part 2 ***\n")
     if(len(sys.argv) >=3 and sys.argv[2] == 'debug'):
         debug = True
-    grid = read_data_file(sys.argv[1])
-    print_grid(grid)
+    fname = sys.argv[1] if len(sys.argv) >=2 else 'sample.txt' 
+    grid = read_data_file(fname)
+    # print_grid(grid)
     start = find_char(grid,'S')
     end = find_char(grid,'E')
     distances = build_dijkstra(start,grid)
     (endx,endy) = end
-    score = distances[endy][endx].shortest_distance
-    print(f"Initial score: {score}")
-    min_score = score
-    save_thresh = 0
-    best_gain = 0
+    orig_score = distances[endy][endx].shortest_distance
+    print(f"Initial score: {orig_score}")
+    trail = build_trail(end,start,distances)
+    if debug:
+        print_trail(trail,grid)
+
+    rev_distances = build_dijkstra(end,grid)
+
+    max_cheat = 20    
+    thresh_count = 0
+    (startx,starty) = start
     rows = len(grid)
     cols = len(grid[0])
-    thresh = 20 if cols==15 else 100
-    gain_set = {}
-    count = 0
-    for y in range(len(grid)):
-        for x in range(len(grid[0])):
-            if skipable(x,y,grid):
-                # only really care if there is 100+ difference to be gained
-                pt_gain = find_largest_gain(x,y,grid,distances)
-                if pt_gain>0:
-                    count += 1
-                set_add(gain_set,pt_gain)
-                if pt_gain >=thresh:
-                    # dprint(f"({x},{y}) shortcut saves: {pt_gain}")
-                    save_thresh += 1
-                if pt_gain > best_gain:
-                    best_gain = pt_gain
-    print(f"Routest that saved {thresh}+ ps: {save_thresh}")
-    dprint(f"Largest gain: {best_gain}")
-    # for k in gain_set.keys():
-    #     dprint(f"{gain_set[k]} shortcuts saved {k} ps")
+    thresh = 50 if rows==15 else 100
+    cheat_thresh_count = 0
+
+    cheat_set = defaultdict(int)
+    radius = max_cheat
+    (endx,endy) = end
+
+    # for every point in the trail, compare to every other point in the trail
+    # see if there is a cheat between the two that saves {thresh} ps
+    for pt1 in reversed(trail):
+        (x1,y1) = pt1
+        dist1 = rev_distances[y1][x1].shortest_distance
+        for pt2 in trail:
+            (x2,y2) = pt2
+            dist2 = rev_distances[y2][x2].shortest_distance
+            d = manhattan(pt1,pt2)
+            if d<=max_cheat:
+                cheat = dist1-dist2-d
+                dprint(f"{x1},{y1},{x2},{y2} => {dist1},{dist2},{d} = {cheat}")
+                if cheat >= thresh:
+                    cheat_thresh_count += 1
+                    cheat_set[cheat] += 1
+
+
+
+    for k in cheat_set.keys():
+        dprint(f"{cheat_set[k]} shortcuts saved {k} ps")
+    print(f"Cheats that saved over {thresh} ps: {cheat_thresh_count}")

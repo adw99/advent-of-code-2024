@@ -164,6 +164,6 @@ if __name__ == '__main__':
             else:
                 path = find_path(grid,distances,(dim-1,dim-1))
         else:
-                print(f"{tick}) ({x},{y}): not on shortest path")
+                dprint(f"{tick}) ({x},{y}): not on shortest path")
 
 
