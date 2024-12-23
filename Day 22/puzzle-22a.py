@@ -20,7 +20,7 @@ def mix_and_prune(i,i2):
 
 if __name__ == '__main__':
     button_costs = [3,1]
-    print(f"*** Day 19, Part 1 ***\n")
+    print(f"*** Day 22, Part 1 ***\n")
     if(len(sys.argv) >=3 and sys.argv[2] == 'debug'):
         debug = True
     fname = sys.argv[1] if len(sys.argv) >=2 else 'sample.txt' 
