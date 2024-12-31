@@ -65,7 +65,7 @@ def process_instruction(ins,opc,registers):
 
     return output, jump
 
-def run_program(instructions,registers):
+def run_program(instructions,registers,program):
     output = ''
     i = 0
     while i < len(instructions):
@@ -77,8 +77,8 @@ def run_program(instructions,registers):
             if output != '':
                 output += ','
             output += out
-            if not program.startswith(output):
-                break                        
+            # if not program.startswith(output):
+            #     break                        
         if jump !=-1:
             i = jump
         else:
@@ -92,28 +92,29 @@ if __name__ == '__main__':
         debug = True
     registers, instructions, program = read_data_file(sys.argv[1])
     dprint(f"Registers: {registers}")
-    dprint(f"Program: {instructions}")
+    dprint(f"Program: {instructions} / {len(instructions)}")
     dprint(f"Target: ({program})")
+    nums = [int(i) for i in program.split(',')]
 
-    # end = 140737488355328 # 2**47
-    # end = 140737486962038
-    end = 105553114176561
-    start = 70368744177664 # 2**46
-    mol = 0
-    solution = -1
-    for i in range(end,start,-1):
-        reg = {}
-        reg['A'] = i
-        reg['B'] = registers['B']
-        reg['C'] = registers['C']
-        output = run_program(instructions,reg,program)
-        if len(output) > mol:
-            print(f">{i} ({output})-{len(output)} vs ({program})-{len(program)}")
-            mol = len(output)
+    solutions = []
+    options = [ (0,1 )]
+    while len(options)>0 and len(solutions)==0:
+        val,depth = options.pop(0)
+        for i in range(8):
+            reg = {}
+            reg['A'] = val + i
+            reg['B'] = registers['B']
+            reg['C'] = registers['C']
+            output = run_program(instructions,reg,program)
+            if output == program:
+                solutions.append(val+i)
+            out_nums = [int(i) for i in output.split(',')]
+            if out_nums == nums[len(nums)-depth:]:
+                dprint(f"Found {val} + {i}: {output}")
+                nextval = (val + i) << 3
+                options.append( (nextval, depth+1) )
 
-        if output == program:
-            print(f">>> {i}")
-            solution = i
-            break
-
-    print(f"Solution: {solution}")
+    if len(solutions) == 0:
+        print("No solution found")
+    else:
+        print(f"Solution: {solutions[0]} / {len(solutions)}")
