@@ -8,8 +8,6 @@ def dprint(fs):
         print(fs)
 
 def read_data_file(fname):
-    patterns = []
-    designs = []
     df = open(fname, "r")
     lines = df.read().splitlines()
     starters = [ int(l) for l in lines]
