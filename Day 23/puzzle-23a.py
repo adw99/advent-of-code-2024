@@ -22,16 +22,11 @@ def build_connections(pairs):
     for (p1,p2) in pairs:
         connections[p1].append(p2)
         connections[p2].append(p1)
-    return connections
 
-def node_list(pairs):
-    nodes = []
-    for (p1,p2) in pairs:
-        if p1 not in nodes:
-            nodes.append(p1)
-        if p2 not in nodes:
-            nodes.append(p2)
-    return nodes
+    csets = {}
+    for k in connections.keys():
+        csets[k] = set(connections[k])
+    return csets
 
 if __name__ == '__main__':
     print(f"*** Day 23, Part 1 ***\n")
@@ -40,21 +35,21 @@ if __name__ == '__main__':
     fname = sys.argv[1] if len(sys.argv) >=2 else 'sample.txt' 
     pairs = read_data_file(fname)
     connections = build_connections(pairs)
-    nodes = node_list(pairs)
+    nodes = connections.keys()
 
     cliques = []
     dprint(connections)
     for p1 in nodes:
         for p2 in connections[p1]:
-            common = set(connections[p1]) & set(connections[p2])
+            common = connections[p1] & connections[p2]
             for p3 in common:
-                dprint(f"{p1} and {p2} have {p3} in common")
+                # dprint(f"{p1} and {p2} have {p3} in common")
                 c = [p1,p2,p3]
                 c.sort()
                 if c not in cliques:
                     cliques.append( c )
 
-    print(len(cliques),cliques)
+    dprint(f"Cliques: {len(cliques)}")
 
     count = 0
     matches = []
