@@ -39,6 +39,14 @@ def eval_node(rule,values):
     else:
         raise ValueError('Invalid operation: {op}')
 
+def extract_value(prefix,values):
+    v_nodes = [i for i in values.keys() if i.startswith(prefix)]
+    result = 0
+    for n in v_nodes:
+        val = values[n]
+        if val:
+            result += 1 << int(n.removeprefix(prefix))
+    return result
 
 if __name__ == '__main__':
     print(f"*** Day 23, Part 1 ***\n")
@@ -48,7 +56,6 @@ if __name__ == '__main__':
     values,rules = read_data_file(fname)
     dprint(f"Values ({len(values)}): {values}")
     dprint(f"Rules ({len(rules)}): {rules}")
-    z_nodes = [i for i in rules.keys() if i.startswith('z')]
     nodes = rules.keys()
     working = True
     passes = 0
@@ -64,12 +71,8 @@ if __name__ == '__main__':
                 calcs += 1
         working = more_work
         print(f"Pass {passes}, calcs: {calcs} of {len(rules)}")
-    result = 0
-    for n in z_nodes:
-        print(f"> {n}: {values[n]} / {int(values[n])}")
-        val = values[n]
-        if val:
-            result += 1 << int(n.removeprefix('z'))
-    print(f"Result (total): {result}")
+    print(f"X : {extract_value('x',values)}")
+    print(f"Y : {extract_value('y',values)}")
+    print(f"Z : {extract_value('z',values)}")
 
     
