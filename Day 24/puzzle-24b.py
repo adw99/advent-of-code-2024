@@ -42,14 +42,33 @@ def eval_node(rule,values):
 def extract_value(prefix,values):
     v_nodes = [i for i in values.keys() if i.startswith(prefix)]
     result = 0
+    maxbit = 0
     for n in v_nodes:
         val = values[n]
+        bit = int(n.removeprefix(prefix))
+        maxbit = max(bit,maxbit)
         if val:
-            result += 1 << int(n.removeprefix(prefix))
-    return result
+            result += 1 << bit
+    return result,maxbit
+
+def bit_diff(a,b,bits,pref):
+    result = []
+    bitmap = {}
+    for i in range(bits):
+        filter = 1 << i
+        # print(f"bit {i}, filter: {bin(filter)}")
+        if (a&filter) != (b&filter):
+            result.append(i)
+            key = pref + f"{i:02}"
+            dprint(f"Bit difference: {key}")
+            val = (b & filter) >> i
+            bitmap[key] = val
+       
+    return bitmap
+
 
 if __name__ == '__main__':
-    print(f"*** Day 24, Part 1 ***\n")
+    print(f"*** Day 24, Part 2 ***\n")
     if(len(sys.argv) >=3 and sys.argv[2] == 'debug'):
         debug = True
     fname = sys.argv[1] if len(sys.argv) >=2 else 'sample.txt' 
@@ -71,8 +90,22 @@ if __name__ == '__main__':
                 calcs += 1
         working = more_work
         print(f"Pass {passes}, calcs: {calcs} of {len(rules)}")
-    print(f"X : {extract_value('x',values)}")
-    print(f"Y : {extract_value('y',values)}")
-    print(f"Z : {extract_value('z',values)}")
+    x,_ = extract_value('x',values)
+    y,_ = extract_value('y',values)
+    xy = x + y
+    z,bits = extract_value('z',values)
 
+    ## Note: this code doesn't SOLVE part 2, it just gave me 
+    ## information that made it ease to solve part 2 by hand.
+    ## Basically look for series of z bits that are wrong, (ie z11, z12, z13)
+    ## look at the wiring for the first bit compared to a 'known good' bit
+    ## (anything before the first error), update wiring info in the data file
+    ## and repeat
+    print(f"X : {x} / {bin(x)}")
+    print(f"Y : {y} / {bin(y)}")
+    print(f"XY: {xy} / {bin(xy)}")
+    print(f"Z : {z} / {bin(z)}")
+    print(f"Z bits: {bits}")
+    bd = bit_diff(xy,z,bits+1,'z')
+    print(f"Bits different between X+Y and Z: {bd}")
     
