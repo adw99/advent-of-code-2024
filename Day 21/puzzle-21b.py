@@ -1,7 +1,7 @@
 import sys
 import re
 import math
-from collections import defaultdict
+import functools
 
 debug = False
 
@@ -57,11 +57,11 @@ class Keypad:
         return (self.x,self.y) != self.avoid
 
 
-    def enter(self,input,depth):
+    def enter(self,input):
         global lookahead
         moves = ''
         keys = list(input)
-        mpos = (2,0)
+        prev = 'A'
         dprint(f"AVOID: {self.avoid}")
         for k in keys:    
             dprint(f">>> {k}")        
@@ -85,8 +85,7 @@ class Keypad:
             else:
                 moa = movax + movay + 'A'
                 dprint(f"moa=={moa}")
-                if depth>0:
-                    movesa,mposa = move_encoder(moa,lookahead,mpos)
+                movesa,mposa = move_encoder(moa,prev,lookahead)
                 scorea = len(movesa) if movesa != None else math.inf
                 dprint(f"{k}-A {moa} --> {movesa} ({mposa}) / {scorea}")
             #plan b - vertical first
@@ -99,8 +98,7 @@ class Keypad:
             else:
                 mob = movby + movbx + 'A'            
                 dprint(f"mob=={mob}")
-                if depth>0:
-                    movesb,mposb = move_encoder(mob,lookahead,mpos)
+                movesb,mposb = move_encoder(mob,prev,lookahead)
                 scoreb = len(movesb) if movesb != None else math.inf
                 dprint(f"{k}-B {mob} --> {movesb} ({mposb}) / {scoreb}")
 
@@ -146,45 +144,37 @@ def movey(start,target,ykey,avoid):
     # dprint(f"movey: {start}, {target}, {ykey} --> {moves}")
     return moves
 
-move_cache = {}
-cache_threshold = 2
-lookahead = 3
 
-def move_encoder(input,depth,start):
+def move_size(input,prev,depth):
+    moves = move_encoder(input,prev,depth)
+    return len(moves) if moves != None else math.inf
+
+
+def move_encoder(input,prev,depth):
+    dprint(f"in>move_encoder({input},{prev},{depth})")
+    start = dirkeys[prev]
+    if depth == 0:
+        return input,start
     moves = ''
-    for i in range(depth,0,-1):
-        moves = ''
-        for key in list(input):
-            m,start = single_move_encoder(key,start,i)
-            if len(m)==0:
-                print(f"!!! single_move_encoder({key}) depth: {i} returned nothing")
-            moves += m
-        input = moves
-    dprint(f">move_encoder({input}, {depth}): {moves}")
+    keys = 0
+    keylist = list(input)
+    prev2 = prev
+    for key in keylist:
+        keys += 1
+        m = single_move_encoder_2(prev2,key,depth)
+        dprint(f">>>> move_encoder({depth}): {key} ->  {m}")
+        moves += m
+        prev2 = key
     return moves,start
 
 
-def single_move_encoder(input,start,depth):
-    global move_cache
-    if len(input)>1:
-        raise ValueError(f"Single move encoder received more than one char: {input}")
-    target = dirkeys[input]
-    (tx,ty) = target
-    (sx,sy) = start
-    cache_key = f"{sx}:{sy}:{tx}:{ty}"
-    if cache_key in move_cache:
-        (result,sx,sy) = move_cache[cache_key]
-        dprint(f"Cache hit({cache_key}): ({result})")
-        return result,(sx,sy)
-    keypad = dirkeys
-    result = ''
-    avoid = keypad['AVOID']
-    target = keypad[input]
-    (tx,ty) = target
+def single_move_encoder_2(prev,next,depth):
+    (sx,sy) = dirkeys[prev]
+    (tx,ty) = dirkeys[next]
+    avoid = dirkeys['AVOID']
     xkey = ('<',-1) if (sx-tx)>0 else ('>',1)
     ykey = ('^',-1) if (sy-ty)>0 else ('v',1)
-    # dprint(f"mpad ({sx},{sy}) => ({tx},{ty}))....{xkey},{ykey}")
-    
+
     movesa = ''
     movesb = ''
     #plan a - horizontal first
@@ -192,64 +182,62 @@ def single_move_encoder(input,start,depth):
     movay = movey((tx,sy),(tx,ty),ykey,avoid)
     scorea = -1
     if movax == None or movay == None:
-        # dprint(f"plan a bad moves: {movax} or {movay}")
         scorea = math.inf
     else:
         movesa = movax + movay + 'A'
-        dprint(f"movesa: {movesa}")
-        if depth>0:
-            movesa,_ = move_encoder(movesa,depth-1,(2,0))
-        scorea = len(movesa)
+        ma = move_encoder(movesa,'A',depth-1)
+        scorea = len(ma)
+        movesa = movax + movay + 'A'
 
     #plan b - vertical first
     movby = movey((sx,sy),(tx,ty),ykey,avoid)
     movbx = movex((sx,ty),(tx,ty),xkey,avoid)
     scoreb = -1
     if movbx == None or movby == None:
-        # dprint(f"plan b bad moves: {movby} or {movbx}")
         scoreb = math.inf
     else:
+        movesb = movby + movbx + 'A'    
+        mb = move_encoder(movesb,'A',depth-1)
+        scoreb = len(mb)
         movesb = movby + movbx + 'A'          
-        dprint(f"movesb: {movesb}")  
-        if depth>0:
-            movesb,_ = move_encoder(movesb,depth-1,(2,0))
-        scoreb = len(movesb)
     sx = tx
     sy = ty
     if scorea == math.inf and scoreb == math.inf:
-        print("!!! BOTH options impossible, should not happen")
-    dprint(f"Possible moves: {movesa} vs {movesb}, ({scorea} vs {scoreb})")
-    if scorea == math.inf and scoreb == math.inf:
         raise ValueError(f"both paths are invalid: ({sx},{sy}): {movesa} / {movesb}")
-    # if( scorea != scoreb) and scorea != math.inf and scoreb != math.inf:
-    #     dprint(f">>>>>> Scores: {scorea} vs {scoreb}")
-    result = movesa if scorea<=scoreb else movesb
-    # if depth == 0:
-    #     print(f"encoder({depth}): ({input}) => {result}")
+    result = movesa if scorea<scoreb else movesb
+    return result
 
-    if result == '':
-        raise ValueError("single_move_encoder about to return empty value (" + input + ")")
-    if len(input) <= cache_threshold:
-        move_cache[cache_key] = (result,sx,sy)
-    return result,(sx,sy)
+
+@functools.lru_cache(maxsize=10240)
+def get_length(input, depth ): 
+    global move_cache
+    if depth == 0: 
+        return len(input)
+    prev = 'A'
+    total_length = 0
+    for char in input:
+        total_length += get_length(move_cache[(prev, char)], depth - 1) 
+        prev = char
+    return total_length
 
 def solve_for_keys(depth,input):
     global numkeys
 
     numpad = Keypad(numkeys)
-    moves = numpad.enter(input,depth)
-    dprint(f"n({input}): {moves}")
-    input = moves
-    start = (2,0)
-    for i in range(depth):
-        moves,start = move_encoder(input,lookahead,start)
-        dprint(f"d({input}): {moves}")
-        input = moves               
+    moves = numpad.enter(input)
+    dprint(f"Keypad.enter({input}): {moves}")
 
-    return moves
+    move_length = get_length(moves,depth)
+
+    dprint(f"d({input}): {move_length}")
+
+    return move_length
+
+lookahead = 8
+move_cache = {}
 
 if __name__ == '__main__':
-    print(f"*** Day 21 Part 1 ***\n")
+    print(f"*** Day 21 Part 2 ***\n")
     if(len(sys.argv) >=3 and sys.argv[2] == 'debug'):
         debug = True
     fname = 'sample.txt' if len(sys.argv)<2 else sys.argv[1]
@@ -258,16 +246,20 @@ if __name__ == '__main__':
     movement_depth = 25
     total = 0
 
-    result = solve_for_keys(lookahead,'379A')
-    print(f"379A: ({len(result)}): {result}")
+    dk = dirkeys.keys()
+    for i in dk:
+        for j in dk:
+            if i != 'AVOID' and j != 'AVOID':
+                move_cache[(i,j)] = single_move_encoder_2(i,j,lookahead)
 
-    # for i in inputs:
-    #     (keys,value) = i
-    #     # dprint(f"> {keys} \n")
-    #     solution = solve_for_keys(movement_depth, keys)
-    #     dprint(f"{keys}: {solution}\n")
-    #     print(f"{value} * {len(solution)} = {len(solution) * value}")
-    #     total += len(solution) * value
+    # result = solve_for_keys(movement_depth,'379A')
+    # print(f"379A: {result} / {result * 379}")
+    for i in inputs:
+        (keys,value) = i
+        # dprint(f"> {keys} \n")
+        solution = solve_for_keys(movement_depth, keys)
+        dprint(f"{keys}: {solution}\n")
+        print(f"{value} * {solution} = {solution * value}")
+        total += solution * value
 
     print(f"Total complexity score: {total}")
-    print(f"Cache size: {len(move_cache.keys())}")

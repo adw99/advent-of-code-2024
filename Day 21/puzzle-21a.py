@@ -129,7 +129,7 @@ def movex(start,target,xkey,avoid):
         moves += xkey[0]
         if(sx,sy) == avoid:
             return None
-    dprint(f"movex: {start}, {target}, {xkey} --> {moves}")    
+    # dprint(f"movex: {start}, {target}, {xkey} --> {moves}")    
     return moves
 
 def movey(start,target,ykey,avoid):
@@ -141,7 +141,7 @@ def movey(start,target,ykey,avoid):
         moves += ykey[0]
         if(sx,sy) == avoid:
             return None
-    dprint(f"movey: {start}, {target}, {ykey} --> {moves}")
+    # dprint(f"movey: {start}, {target}, {ykey} --> {moves}")
     return moves
 
 def move_encoder(input,depth,start):
@@ -229,7 +229,7 @@ if __name__ == '__main__':
         (keys,value) = i
         # dprint(f"> {keys} \n")
         solution = solve_for_keys(movement_depth, keys)
-        dprint(f"{keys}: {solution}\n")
+        print(f"{keys}: {solution}\n")
         print(f"{value} * {len(solution)} = {len(solution) * value}")
         total += len(solution) * value
 
