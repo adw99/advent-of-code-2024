@@ -206,14 +206,6 @@ def solve_for_keys(depth,input):
     result = ''
     numpad = Keypad(numkeys)
     return numpad.enter(input,depth)
-    # dprint(f"{input}: {numkeys}")
-    # pos = (2,0)
-    # for nk in list(numkeys):
-    #     temp,pos = move_encoder(nk,depth-1,pos)
-    #     dprint(f"encoded ({nk}) -> {temp} / {len(temp)}")
-    #     result += temp
-
-    return result
 
 if __name__ == '__main__':
     print(f"*** Day 21 Part 1 ***\n")
